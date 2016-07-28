@@ -39,7 +39,7 @@ class Robot
   def pick_up(item)
     unless item.weight > (@capacity - items_weight)
       @equipped_weapon = item if item.is_a? Weapon
-      @items << item
+      @items << item unless can_consume?(item)
     end
   end
 
@@ -72,9 +72,12 @@ class Robot
 
   def attack(enemy)
     if @equipped_weapon
-      @equipped_weapon.hit(enemy)
+      if in_range?(enemy, @equipped_weapon.range)
+        @equipped_weapon.hit(enemy)
+        @equipped_weapon = nil
+      end
     else
-      enemy.wound(DEFAULT_ATTACK_POWER)
+      enemy.wound(DEFAULT_ATTACK_POWER) if in_range?(enemy)
     end
   end
 
@@ -86,4 +89,21 @@ class Robot
   def dead?
     @health.zero?
   end
+
+  def in_range?(robot, range_mod=1)
+    unless @position == robot.position
+      if @position[X_INDEX] == robot.position[X_INDEX]
+        @position[Y_INDEX] == (robot.position[Y_INDEX] - range_mod) || @position[Y_INDEX] == (robot.position[Y_INDEX] + range_mod)
+      elsif @position[Y_INDEX] == (robot.position[Y_INDEX])
+        @position[X_INDEX] == (robot.position[X_INDEX] - range_mod) || @position[X_INDEX] == (robot.position[X_INDEX] + range_mod)
+      end
+    end
+  end
+
+  def can_consume?(item)
+    if item.is_a?(BoxOfBolts) && ((STARTING_HEALTH - self.health) >= 20)
+      item.feed(self)
+    end
+  end
+
 end
