@@ -10,8 +10,9 @@ class Robot
   X_INDEX = 0
   Y_INDEX = 1
 
-  attr_reader :capacity
-  attr_accessor :position, :items, :health, :equipped_weapon, :shield
+  attr_reader :capacity, :position, :items, :health, :equipped_weapon, :shield
+
+  @@robot_list = []
 
   def initialize
     @position = [0, 0]
@@ -20,6 +21,17 @@ class Robot
     @health = STARTING_HEALTH
     @equipped_weapon = nil
     @shield = STARTING_SHIELD
+    @@robot_list << self
+  end
+
+  class << self
+    def robot_list
+      @@robot_list
+    end
+
+    def in_position(x, y)
+      @@robot_list.select { |bot| bot.position == [x, y] }
+    end
   end
 
   def move_left
@@ -109,9 +121,28 @@ class Robot
   end
 
   def can_consume?(item)
-    if item.is_a?(BoxOfBolts) && ((STARTING_HEALTH - self.health) >= 20)
+    if item.is_a?(BoxOfBolts) && health < STARTING_HEALTH
       item.feed(self)
+    elsif item.is_a?(Battery) && shield < STARTING_SHIELD
+      item.recharge(self)
     end
+  end
+
+  def charge_shield
+    raise InvalidTargetError, 'Cannot charge shield of a dead robot!' if dead?
+    @shield = STARTING_SHIELD
+  end
+
+  def shields_full?
+    shield == STARTING_SHIELD
+  end
+
+  def scan
+    up_tile = Robot.in_position(@position[X_INDEX], @position[Y_INDEX] + 1)
+    down_tile = Robot.in_position(@position[X_INDEX], @position[Y_INDEX] - 1)
+    left_tile = Robot.in_position(@position[X_INDEX] - 1, @position[Y_INDEX])
+    right_tile = Robot.in_position(@position[X_INDEX] + 1, @position[Y_INDEX])
+    up_tile.concat(down_tile).concat(left_tile).concat(right_tile)
   end
 
 end
