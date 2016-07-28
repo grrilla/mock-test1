@@ -5,12 +5,13 @@ class Robot
 
   DEFAULT_ATTACK_POWER = 5
   STARTING_HEALTH = 100
+  STARTING_SHIELD = 50
   MAX_CAPACITY = 250
   X_INDEX = 0
   Y_INDEX = 1
 
   attr_reader :capacity
-  attr_accessor :position, :items, :health, :equipped_weapon
+  attr_accessor :position, :items, :health, :equipped_weapon, :shield
 
   def initialize
     @position = [0, 0]
@@ -18,6 +19,7 @@ class Robot
     @capacity = MAX_CAPACITY
     @health = STARTING_HEALTH
     @equipped_weapon = nil
+    @shield = STARTING_SHIELD
   end
 
   def move_left
@@ -49,11 +51,17 @@ class Robot
     total_weight
   end
 
-  def wound(hp_loss)
-    @health = if hp_loss > @health
-      0
-    else
-      @health - hp_loss
+  def wound(damage)
+    if damage >= (health + shield) # if this is enough damage to kill it...
+      @health = 0
+      @shield = 0
+    elsif damage < shield # else, if we have enough shield to absorb hit...
+      @shield -= damage
+    elsif shield.zero? # else, if we have no shield to absorb damage...
+      @health -= damage
+    else # ... then we have some shield and enough hp survive the blow, but shield is gone
+      @health -= damage - shield
+      @shield = 0
     end
   end
 
