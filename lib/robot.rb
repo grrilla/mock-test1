@@ -1,10 +1,13 @@
-require 'pry'
-
 class Robot
+
+  class InvalidTargetError < StandardError
+  end
 
   DEFAULT_ATTACK_POWER = 5
   STARTING_HEALTH = 100
   MAX_CAPACITY = 250
+  X_INDEX = 0
+  Y_INDEX = 1
 
   attr_reader :capacity
   attr_accessor :position, :items, :health, :equipped_weapon
@@ -18,19 +21,19 @@ class Robot
   end
 
   def move_left
-    @position[0] -= 1
+    @position[X_INDEX] -= 1
   end
 
   def move_right
-    @position[0] += 1
+    @position[X_INDEX] += 1
   end
 
   def move_down
-    @position[1] -= 1
+    @position[Y_INDEX] -= 1
   end
 
   def move_up
-    @position[1] += 1
+    @position[Y_INDEX] += 1
   end
 
   def pick_up(item)
@@ -62,6 +65,11 @@ class Robot
     end
   end
 
+  def heal!(hp_gain)
+    raise InvalidTargetError, 'Cannot revive a dead robot!' if dead?
+    heal(hp_gain)
+  end
+
   def attack(enemy)
     if @equipped_weapon
       @equipped_weapon.hit(enemy)
@@ -70,4 +78,12 @@ class Robot
     end
   end
 
+  def attack!(enemy)
+    raise InvalidTargetError, 'Can only attack other robots!' unless enemy.is_a? Robot
+    attack(enemy)
+  end
+
+  def dead?
+    @health.zero?
+  end
 end
